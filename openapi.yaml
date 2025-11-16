@@ -1,0 +1,64 @@
+openapi: 3.0.0
+info:
+  title: Analytics API
+  version: "1.0.0"
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new app and generate API key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                ownerEmail: { type: string }
+      responses:
+        '200':
+          description: API Key generated
+  /api/analytics/collect:
+    post:
+      summary: Collect an analytics event
+      parameters:
+        - name: x-api-key
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event: { type: string }
+                url: { type: string }
+                referrer: { type: string }
+                device: { type: string }
+                ipAddress: { type: string }
+                timestamp: { type: string, format: date-time }
+                metadata: { type: object }
+      responses:
+        '201':
+          description: Created
+  /api/analytics/event-summary:
+    get:
+      summary: Event summary
+      parameters:
+        - in: query
+          name: event
+          schema: { type: string }
+        - in: query
+          name: startDate
+          schema: { type: string, format: date }
+        - in: query
+          name: endDate
+          schema: { type: string, format: date }
+        - in: query
+          name: app_id
+          schema: { type: string }
+      responses:
+        '200':
+          description: Summary
