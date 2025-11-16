@@ -2,49 +2,58 @@ require("dotenv").config();
 const app = require("./app");
 const { port } = require("./config");
 const { PrismaClient } = require("@prisma/client");
-const redis = require("./utils/redis"); // ensure redis client loads
+const redis = require("./utils/redis");
 
 const prisma = new PrismaClient();
 
 async function startServer() {
   try {
+    // PostgreSQL connection
     console.log("Connecting to PostgreSQL...");
     await prisma.$connect();
-    console.log("PostgreSQL connected");
+    console.log("🟢 PostgreSQL connected");
 
+    // Redis test using ioredis
     console.log("Checking Redis connection...");
-    await redis.client.ping();
-    console.log("Redis connected");
+    const pong = await redis.ping();
+    console.log("🟢 Redis PING:", pong);
 
-    // Attach db instance to app
+    // Attach Prisma
     app.locals.prisma = prisma;
 
+    // Start API Server
     app.listen(port, () => {
-      console.log(`Server listening on port ${port}`);
+      console.log(`🚀 Server listening on port ${port}`);
     });
 
   } catch (error) {
-    console.error("Failed to start server:", error);
+    console.error("❌ Failed to start server:", error);
     process.exit(1);
   }
 }
 
 startServer();
 
-// ------------------------------
-// Graceful Shutdown (Railway safe)
-// ------------------------------
-process.on("SIGINT", async () => {
+// --------------------------------------
+// Graceful Shutdown - Required for Railway
+// --------------------------------------
+const shutdown = async () => {
+  console.log("\nShutting down gracefully...");
   await prisma.$disconnect();
-  process.exit(0);
-});
 
-process.on("SIGTERM", async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-});
+  try {
+    redis.disconnect();
+  } catch (_) {}
 
-// Catch async errors
+  process.exit(0);
+};
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+
+// --------------------------------------
+// Global Error Handler for Unexpected Promises
+// --------------------------------------
 process.on("unhandledRejection", (err) => {
-  console.error("Unhandled Promise Rejection:", err);
+  console.error("❌ Unhandled Promise Rejection:", err);
 });
