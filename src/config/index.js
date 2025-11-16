@@ -1,5 +1,5 @@
 module.exports = {
-  port: process.env.PORT || 4000,
+  port: process.env.PORT || 3000,
   redisUrl: process.env.REDIS_URL,
   dbUrl: process.env.DATABASE_URL,
   rateLimit: {
