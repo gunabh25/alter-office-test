@@ -7,40 +7,58 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ----------------------------
+// App Model
+// ----------------------------
 model App {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   ownerEmail  String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   apiKeys     ApiKey[]
   events      Event[]
 }
 
+// ----------------------------
+// API Key Model
+// ----------------------------
 model ApiKey {
-  id         String   @id @default(cuid())
-  keyHash    String   // store hashed API key (bcrypt)
-  rawPrefix  String   // first 8 chars for lookup if you prefer
-  app        App      @relation(fields: [appId], references: [id])
+  id         String    @id @default(cuid())
+  keyHash    String    // bcrypt hash of API key
+  rawPrefix  String    @unique // first 8 chars for fast lookup
+  app        App       @relation(fields: [appId], references: [id])
   appId      String
-  revoked    Boolean  @default(false)
+  revoked    Boolean   @default(false)
   expiresAt  DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
+
+  @@index([appId])
+  @@index([revoked])
+  @@index([expiresAt])
 }
 
+// ----------------------------
+// Event Model
+// ----------------------------
 model Event {
-  id         String   @id @default(cuid())
-  event      String
-  url        String?
-  referrer   String?
-  device     String?
-  ipAddress  String?
-  timestamp  DateTime @default(now())
-  metadata   Json?
-  app        App      @relation(fields: [appId], references: [id])
-  appId      String
-  userId     String?  // optional; if you track user ids
-  createdAt  DateTime @default(now())
+  id          String    @id @default(cuid())
+  event       String
+  url         String?
+  referrer    String?
+  device      String?
+  ipAddress   String?
+  timestamp   DateTime  // take timestamp from client — no default
+  metadata    Json?
+  app         App       @relation(fields: [appId], references: [id])
+  appId       String
+  userId      String?
+  createdAt   DateTime  @default(now())
 
+  // Important indexing for high-volume analytics
+  @@index([appId])
+  @@index([appId, event])
+  @@index([event])
+  @@index([timestamp])
   @@index([appId, event, timestamp])
   @@index([userId])
 }
