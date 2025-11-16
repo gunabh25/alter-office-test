@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const cache = require('../utils/cache');
+const cache = require('../utils/redis');
 
 module.exports.collectEvent = async (req, res, next) => {
   try {
