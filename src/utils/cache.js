@@ -1,6 +1,6 @@
 const Redis = require('ioredis');
 const { redisUrl } = require('../config');
-const client = new Redis(redisUrl);
+const client = new Redis(process.env.REDIS_URL);
 
 module.exports = {
   get: async (key) => await client.get(key),
